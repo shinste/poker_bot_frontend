@@ -19,9 +19,26 @@ Features that will be implemented into this program will be as follows:
 ## Endpoint Documentation
 ### Game Information
 * Endpoint name: Game Information
-* Description: Initial Game Information (Number of Players, Budget, Ante, Playstyle)
-* Endpoint Type: GET
+* Description: Initial Game Information (Number of Players, Budget,  Ante, Playstyle)
+* Endpoint Type: POST
 * Endpoint: \initial_info\
 * Parameters: Strings
 * Return Type: JSON
+
+### Turn
+* Endpoint name: Turn Information
+* Description: The user's turn information must be inputted (Turn, Current Bet, Position, Flipped Cards, Hand Cards, All-Ins)
+* Endpoint Type: POST
+* Endpoint: \turn_info\
+* Parameters: Strings
+* Return Type: JSON
+
+### Recommendation
+* Endpoint name: Recommendation
+* Description: Provide a couple recommendations based on statistics, play style, and budget
+* Endpoint Type: GET
+* Endpoint: \recommend\
+* Parameters: Strings
+* Return Type: JSON 
+
 
