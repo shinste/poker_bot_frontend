@@ -5,12 +5,9 @@ This is a project I started in order to further familiarize myself with Python a
 
 ## Scope
 Features that will be implemented into this program will be as follows:
-* Move Breakdown
-  - The choices of poker are limited to: Check, Call, Fold, Raise, and All-in, there will be a breakdown on each of these moves along with statistical chances associated with them
-  - There will also be an in-depth description for each move in order to teach the player why the statistics are the way that they are
-* Risk management
-  - The user will be prompted on what kind of playstyle is desired (Risky, Safe, Moderate).
-  - The user will be able to change their playstyle any time of the game
+* Game Play
+  - Being able to play the game while acquiring useful advice can help you get experience that will improve your real-time strategies and decisions
+  - There will be variability with pots, players and antes that the user can edit in order to fit their desired game settings
 * Move Recommendation
   - There will be a specialized recommendation that takes into account statistics, play style, and the amount of money
 * Summary
@@ -26,8 +23,8 @@ Features that will be implemented into this program will be as follows:
 * Return Type: JSON
 
 ### Turn
-* Endpoint name: Turn Information
-* Description: The user's turn information must be inputted (Turn, Current Bet, Position, Flipped Cards, Hand Cards, All-Ins)
+* Endpoint name: Game Information
+* Description: Input the user's game settings information and give it to API
 * Endpoint Type: POST
 * Endpoint: \turn_info\
 * Parameters: Strings
