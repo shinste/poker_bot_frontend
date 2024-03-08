@@ -4,12 +4,16 @@ import StartComponent from './components/StartComponent';
 import {useState} from 'react';
 // @ts-ignore
 import cards from './icons/Cards.png';
+import Game from './components/Game';
 
 
 function App() {
-  document.body.style.backgroundColor = "#807C7C";
+  document.body.style.backgroundColor = "#d9d9e3cc"
 
   const [initial, setInitial] = useState(true);
+  const [settings, setSettings] = useState<number[]>([]);
+  const [sessionId, setSessionId] = useState<string>('');
+
 
   return (
     <div style={{fontFamily:'sans-serif'}}>
@@ -19,12 +23,20 @@ function App() {
           <img src={cards}/>
         </div>
         <div style={{marginBottom: 40}}>
-          <p style={{margin:0, color: 'white'}}>POKERBOT</p>
+          <p style={{margin:0, color: 'gray'}}>POKERBOT</p>
         </div>
-
-        <div style={{height: '100vh'}}>
-          <StartComponent setInitial={setInitial} />
-        </div>
+        {/* #0066cc */}
+        {initial ? (
+          <div style={{ height: '100vh' }}>
+            <StartComponent setInitial={setInitial} setSettings={setSettings} setSessionId={setSessionId} />
+          </div>
+        ) : (
+          <div>
+            <Game settings={settings}/>
+          </div>
+        )}
+        
+        
 
       </div>
     </div>

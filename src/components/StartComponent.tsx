@@ -1,37 +1,107 @@
-import { Box, Text, NumberInput, NumberInputField, InputLeftElement, Icon, InputGroup } from '@chakra-ui/react'
-import { Select } from '@chakra-ui/react'
 import NumbInput from './NumbInput';
+import {Button, Typography, Box, InputLabel, MenuItem, FormControl, Select} from '@mui/material';
 import React, { useState, SetStateAction, Dispatch, useContext} from 'react';
+import IncrementNumber from './IncrementNumber';
+import axios from 'axios';
+
+
+// import * as React from 'react';
+// import Box from '@mui/material/Box';
+// import InputLabel from '@mui/material/InputLabel';
+// import MenuItem from '@mui/material/MenuItem';
+// import FormControl from '@mui/material/FormControl';
+// import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 interface StartComponentProps {
   setInitial: Dispatch<SetStateAction<boolean>>;
+  setSettings: Dispatch<SetStateAction<number[]>>;
+  setSessionId: Dispatch<SetStateAction<string>>;
 }
 
-const StartComponent: React.FC<StartComponentProps> = ({ setInitial }) => {
+const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings, setSessionId }) => {
+    const instance = axios.create();  
+    const [difficulty, setDifficulty] = useState(2);
+    const [players, setPlayers] = useState(3);
+    const [buyIn, setBuyIn] = useState(200);
+    const [bigBlind, setBigBlind] = useState(5);
+
+
+    const handleDifficulty = (event: any) => {
+        setDifficulty(event.target.value);
+      };
+
+    const handleButtonClick = async () => {
+        setSettings([players + 1, buyIn, bigBlind, difficulty, 1]);
+        // try {
+        //     const response = await instance.post('http://127.0.0.1:8000/session/', {
+        //       players: players,
+        //       buy_in: buyIn,
+        //       big_blind: bigBlind,
+        //       difficulty: difficulty,
+        //       button: 1
+        //     });
+        //     console.log('wtf', response.data["status"]);
+        //     setSessionId(response.data["status"]);
+        //   } catch (error) {
+        //     console.error('Error fetching data: ', error);
+        //   }
+          setInitial(false);
+        };
+    
+
     return (
         <div>
-            <div>
-                <Text m={0} >PokerBot is a hands-on learning poker experience where you can</Text>
-                <Text m={0} >enjoy fun games of poker while improving each hand!</Text>
-                <Text m={0} >We provide move recommendations, statistical </Text>
-                <Text m={0} >analysis, and strategic insight.</Text>
-                <Text m={0} >Press Play Game to Start</Text>
+            <div className='gray'>
+                <Typography m={0} sx={{color: 'white'}} >PokerBot is a hands-on learning poker experience where you can</Typography>
+                <Typography m={0}sx={{color: 'white'}} >enjoy fun games of poker while improving each hand!</Typography>
+                <Typography m={0} sx={{color: 'white'}}>We provide move recommendations, statistical </Typography>
+                <Typography m={0} sx={{color: 'white'}}>analysis, and strategic insight.</Typography>
+                <Typography m={0} sx={{color: 'white'}}>Press Play Game to Start</Typography>
             </div>
             <div style={{alignItems: 'center', marginTop:80}}>
-                <Box bg='#BEBEBE' w="30%" h='30rem' borderRadius={8} style={{border: '2px solid #A8A8A8', margin: 'auto'}}>
+                <Box sx={{border: '2px solid #A8A8A8', margin: 'auto', width: '30%', height: '30rem', backgroundColor: "#BEBEBE", borderRadius: 8}}>
                     <Box className='vertical-flex' style={{height: '100%'}}>
-                        <NumbInput text={'Number of Player'} defaultNumber={15} min={3} max={5}/>
-                        <NumbInput text={'Buy-In'} defaultNumber={20} min={20} max={500}/>
-                        <NumbInput text={'Ante'} defaultNumber={5} min={0} max={100000}/>
-                        <Box margin={10}>
-                            <Text>Difficulty</Text>
-                                <Select icon={<></>}>
-                                    <option value='Option 1'>Easy</option>
-                                    <option value='Option 2'>Medium</option>
-                                    <option value='Option 3'>Difficult</option>
-                                </Select>
-                                
+                        <Box mt={2} mb={4}>
+                            <Typography>Number of Bots</Typography>
+                            <Box sx={{width: "44%", margin: 'auto'}}>
+                                <IncrementNumber aria-label="Number of Bots" defaultValue={3} max={6} min={2} onChange={(event,value) => setPlayers(value ?? 3)}/>
+                            </Box>
                         </Box>
+                        <Box mb={4}>
+                            <Typography>Buy-In</Typography>
+                            <Box sx={{width: "44%", margin: 'auto'}}>
+                                <IncrementNumber aria-label="Buy-In" defaultValue={200} min={10} onChange={(event,value) => setBuyIn(value ?? 200)}/>
+                            </Box>
+                        </Box>
+                        <Box mb={4}>
+                            <Typography>Big Blind</Typography>
+                            <Box sx={{width: "44%", margin: 'auto', textAlign: 'center'}}>
+                                <IncrementNumber aria-label="BigBlind" defaultValue={5} min={0} onChange={(event,value) => setBigBlind(value ?? 5)}/>
+                            </Box>
+                        </Box>
+                        
+                        <Box mb={2}sx={{width: '44%', marginLeft: 'auto',marginRight: 'auto'}}>
+                            <Typography>Difficulty</Typography>
+                            <FormControl fullWidth sx={{backgroundColor: 'white'}}>
+                                <InputLabel id="demo-simple-select-label"></InputLabel>
+                                <Select
+                                sx={{backgroundColor: 'white'}}
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={difficulty}
+                                onChange={handleDifficulty}
+                                >
+                                <MenuItem value={1}>Easy</MenuItem>
+                                <MenuItem value={2}>Medium</MenuItem>
+                                <MenuItem value={3}>Hard</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+                        <Box sx={{ height: 300 }}>
+                            <Button onClick={handleButtonClick}>Play Game</Button>
+                        </Box>
+                        
+                        
                     </Box>
                 </Box>
             </div>
