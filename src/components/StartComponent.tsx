@@ -32,19 +32,6 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
 
     const handleButtonClick = async () => {
         setSettings([players + 1, buyIn, bigBlind, difficulty, 1]);
-        // try {
-        //     const response = await instance.post('http://127.0.0.1:8000/session/', {
-        //       players: players,
-        //       buy_in: buyIn,
-        //       big_blind: bigBlind,
-        //       difficulty: difficulty,
-        //       button: 1
-        //     });
-        //     console.log('wtf', response.data["status"]);
-        //     setSessionId(response.data["status"]);
-        //   } catch (error) {
-        //     console.error('Error fetching data: ', error);
-        //   }
           setInitial(false);
         };
     
