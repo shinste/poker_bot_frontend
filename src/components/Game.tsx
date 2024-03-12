@@ -1,6 +1,5 @@
-import React, { useState, SetStateAction, Dispatch, useContext, useEffect} from 'react';
-import getApi from '../functions/getApi';
-import {Button, Typography, Box, InputLabel, MenuItem, FormControl, Select} from '@mui/material';
+import React, { useState, useEffect} from 'react';
+import {Button, Typography, Box} from '@mui/material';
 import CardDisplay from './CardDisplay';
 import DialogBox from './DialogBox';
 import GameDisplay from './GameDisplay';
@@ -16,7 +15,6 @@ interface CardProps {
     cards: {
         [key: number]: [string,string][];
         playing: [string,string][];
-        // session_id: string;
     };
     pots: {
         total: number;
@@ -50,16 +48,21 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
     const [conversation, setConversation] = useState<string[]>([]);
     const [cards, setCards] = useState<CardProps['cards']>({1: [], playing: []});
     const [playerTurn, setPlayerTurn] = useState(0);
-    //change?
     const [currentPots, setCurrentPots] = useState<CardProps['pots']>({total: buy_in, current_bet: big_bet, committed: 0, totalPot: 0})
-    //change?
     const [opponents, setOpponents] = useState<CardProps['opponents']>({})
-    //change?
     const [folds, setFolds] = useState<number[]>([]);
     let blindPositions = blinds(button, total_players);
     const [commitByRound, setCommitByRound] = useState<CardProps['commitTracker']>({});
     const [roundEnd, setRoundEnd] = useState(0);
-    const [broke, setBroke] = useState<number[]>([]);
+    const [show, setShow] = useState(false);
+    const [allIns, setAllIns] = useState<number[]>(Array.from({length: total_players}, (_, i) => i + 1))
+    
+    const startGame = () => {
+        setPlayerTurn(settings[4] + 3 % total_players)
+        setConversation(prevConversation => [...prevConversation, 'New Game Starting!'])
+        console.log(cards);
+        console.log('Starting Game Press, Setting Player Turn to:', settings[4] + 3 % total_players)
+    }
 
     // Instructions from AI API
     const AIMove = async () => {
@@ -69,8 +72,10 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                 let committedRound = 0;
                 if (commitByRound.hasOwnProperty(playerTurn)) {
                     committedRound = commitByRound[playerTurn];
+                    console.log('Checking if player has committed in this round already, Player Turn: ', playerTurn, 'committment by round: ', commitByRound);
                 }
-                console.log('committedRound', commitByRound);
+                // control what cards you send to AI because it somehow sees the cards anyways?
+
                 const response = await instance.post('http://127.0.0.1:8000/ai_move/', {
                     player: playerTurn,
                     turn: turn,
@@ -78,47 +83,57 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                     budget: opponents[playerTurn]['total'],
                     cards: cards,
                     committed: opponents[playerTurn]['commit'],
-                    commitRound: committedRound
+                    commitRound: committedRound,
+                    difficulty: settings[3],
+                    best: determineBestHand(turn, playerTurn, cards)
                 });
-                console.log(response.data);
                 if (!commitByRound.hasOwnProperty(playerTurn)) {
                     commitByRound[playerTurn] = 0
                 }
-                // PROCESSING AI MOVE
+                // Fixing AI Inconsistencies and Bad Habits
                 let aiDecision = response.data["move"].toLowerCase()
+                let raise = response.data['bet_increase'];
+                // If ai decides to raise less than the current raise amount, raise it to the current raise amount
+                if (aiDecision.includes('raise') && raise < currentPots['current_bet'] - commitByRound[playerTurn]) {
+                    raise = currentPots['current_bet'] - commitByRound[playerTurn];
+                }
+
+                // If ai decides to check when theres a bet, it will change to call
                 if (aiDecision.includes('check') && commitByRound[playerTurn] !== currentPots['current_bet']) {
                     aiDecision = 'call';
-                } else if (currentPots['current_bet'] === commitByRound[playerTurn] && aiDecision.includes('call')) {
+                // If ai decides to call or fold when they have met the bet, change to check
+                } else if (currentPots['current_bet'] === commitByRound[playerTurn] && (aiDecision.includes('call') || aiDecision.includes('fold'))) {
                     aiDecision = 'check';
+                // If ai decides to raise when it cant or can barely meet the current bet, change to call
+                } else if (currentPots['current_bet'] - commitByRound[playerTurn] >= opponents[playerTurn]['total'] && aiDecision.includes('raise')) {
+                    aiDecision = 'call';
                 }
+                console.log('AI move', aiDecision);
                 setConversation(prevConversation => [...prevConversation, `Player ${playerTurn}'s Move: ` + aiDecision]);
                 if (aiDecision.includes('fold')) {
                     setFolds(prevFolds => [...prevFolds, playerTurn]);
-                    console.log(folds, 'folds');
-                    if (folds.length === total_players - 2) {
-                        GameWinner(playerTurn);
-                    }
-                    if (playerTurn === blindPositions.smallBlind && folds.length !== total_players - 2) {
-                        let newSmall = playerTurn;
-                        while (newSmall === playerTurn || folds.includes(newSmall)) {
-                            if (newSmall === total_players) {
-                                newSmall = 1;
-                            } else {
-                                newSmall += 1;
-                            }
-                        }
-                    }
+                    // This is array to help keep track of total active players for all ins
+                    allIns.splice(allIns.indexOf(playerTurn), 1)
+                    console.log('this move has been detected as a fold, folds: ', folds)
+                    // if (folds.length === 2) {
+                    //     console.log('it has been determined that only 1 player is active in this round because opponent folded', folds);
+                    //     GameWinner(playerTurn);
+                    // }
                 } else if (aiDecision.toLowerCase() == 'call' || aiDecision.includes('raise')) {
                     // if calling or raising past the player's budget
                     let increase = 0;
 
                     // Check its not an ALL IN 
-                    if (opponents[playerTurn]['total'] > currentPots['current_bet'] + response.data['bet_increase']) {
-                        increase = currentPots['current_bet'] + response.data['bet_increase'] - commitByRound[playerTurn];
+                    if (aiDecision.includes('raise') && opponents[playerTurn]['total'] > response.data['bet_increase']) {
+                        increase = currentPots['current_bet'] + (Math.round(response.data['bet_increase'] * 10) / 10) - commitByRound[playerTurn];
                         currentPots['current_bet'] = currentPots['current_bet'] + response.data['bet_increase'];
-                    } else {
+                    } else if (aiDecision.includes('call') && opponents[playerTurn]['total'] > currentPots['current_bet'] - commitByRound[playerTurn]) {
+                        increase = currentPots['current_bet'] - commitByRound[playerTurn];
+                        currentPots['current_bet'] = currentPots['current_bet'] + response.data['bet_increase'];
+                    }
+                     else {
                         // ALL IN
-                        broke.push(playerTurn);
+                        allIns.splice(allIns.indexOf(playerTurn), 1)
                         increase = opponents[playerTurn]['total'];
                         if (currentPots['current_bet'] < increase + commitByRound[playerTurn]) {
                             currentPots['current_bet'] = increase + commitByRound[playerTurn]
@@ -129,7 +144,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                     opponents[playerTurn].commit += increase;
                     currentPots['totalPot'] += increase;
                     opponents[playerTurn].total -= increase;
-                    console.log('increase for ',playerTurn, increase);
+                    console.log('this player has decided to ', aiDecision, currentPots, opponents, commitByRound);
                 }
             } catch (error) {
                 console.log(error);
@@ -139,17 +154,13 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
     }
 
     const initiate = async () => {
-        // console.log(sessionId);
         instance.get(`http://127.0.0.1:8000/initiate/?players=${encodeURIComponent(total_players)}`)
         .then(response => {
-            console.log('response', response);
             setCards(response.data);
             Object.entries(response.data).forEach(([key, value]) => {
-                console.log(key, value);
                 if (key != 'playing' && key != '1') {
                     const cards: [string | number, string][] = value as [string | number, string][];
                     opponents[Number(key)].cards = cards;
-                    console.log(opponents[Number(key)], 'currents');
                 }
             })
         })
@@ -168,6 +179,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
     }
 
     const PlayerChange = () => {
+        console.log(`The turn is being changed from ${playerTurn}`);
         if (playerTurn === total_players) {
             setPlayerTurn(1);
         } else {
@@ -176,36 +188,54 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
     }
 
     const handleUserMove = async (move: string, amount: number) => {
-        console.log(move, amount);
         try {
             if (move == 'fold') {
                 setFolds(prevFolds => [...prevFolds, 1]);
-                // Detects if every player has folded except 1
-                console.log(folds, 'player fold');
-            } else if (move == 'call' || move == 'raise') {
+                console.log('User has folded');
+                setShow(true);
+                allIns.splice(allIns.indexOf(1), 1)
+            } else if (move === 'call' || move === 'raise') {
+                if (move === 'raise') {
+                    if (amount < currentPots['current_bet']) {
+                        setConversation(prevConversation => [...prevConversation, `ERROR: To re-raise, you must bet at least ${currentPots['current_bet']} (2x the current bet)`]);
+                        return;
+                    }
+                }
+
                 let increase = 0;
 
-                if (commitByRound.hasOwnProperty(1)) {
-                    increase = currentPots['current_bet'] + amount - commitByRound[1];
-                    commitByRound[1] += increase;
-                } else { 
-                    increase = currentPots['current_bet'] + amount;
-                    commitByRound[1] = currentPots['current_bet'] + amount;
+                if (!commitByRound.hasOwnProperty(1)) {
+                    commitByRound[1] = 0;
                 }
+
+                increase = currentPots['current_bet'] + amount - commitByRound[1];
+
+                if (amount + currentPots['current_bet'] - commitByRound[playerTurn] >= currentPots['total'] || currentPots['total'] <= currentPots['current_bet'] - commitByRound[playerTurn]) {
+                    allIns.splice(allIns.indexOf(1), 1);
+                    setConversation(prevConversation => [...prevConversation, 'Player 1 has went ALL-IN']);
+                    increase = currentPots['total'];
+                }
+
+                commitByRound[1] += increase;
+                console.log(amount + currentPots['current_bet'] - commitByRound[playerTurn] === currentPots['total'], amount, currentPots['current_bet'], commitByRound[playerTurn], currentPots['total']);
+
                 currentPots['current_bet'] = currentPots['current_bet'] + amount;
                 currentPots['committed'] += increase;
                 currentPots['totalPot'] += increase;
                 currentPots['total'] -= increase;
-                console.log('increase', increase);
+                console.log('user has called or raised', currentPots, commitByRound, increase);
             } else {
+                console.log('user has checked or edge case', move);
                 commitByRound[1] = 0;
             }
-            move = move.charAt(0).toUpperCase() + move.slice(1);
+            move = move.charAt(0) + move.slice(1);
             if (amount !== 0) {
                 move = move + " " + amount;
             }
             setConversation(prevConversation => [...prevConversation, `Player 1's Move: ${move}`]);
-            if (folds.length === total_players - 2) {
+
+            if (move === 'fold' && folds.length === 2) {
+                console.log('it has been determined that only 1 player is active in this round because user has folded', folds);
                 GameWinner(1);
             } else {
                 PlayerChange();
@@ -215,7 +245,10 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
           }
     };
 
-    const GameWinner = (folder?: number) => {
+    const GameWinner = async (folder?: number) => {
+        setPlayerTurn(-1);
+        console.log(`game has been determined to have ended. folder? ${folder}`);
+        setTurn(4);
         const allPlayers = Array.from({ length: total_players }, (_, i) => i + 1);
         const activePlayers = allPlayers.filter(player => !folds.includes(player));
         const activeCards: CardProps['active'] = {}
@@ -224,8 +257,8 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                 activeCards[num] = determineBestHand(3, num, cards);
             }
         }
-        console.log(activePlayers, 'these are the candidates');
-        setPlayerTurn(-1);
+        setShow(true);
+        
         let maximum = 0;
         let winner = '';
         let tie: string[] = [];
@@ -239,30 +272,25 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
             }
         }
         const winnerHand = activeCards[Number(winner)][0];
-        if (tie.length === 1) {
-            console.log(winner, winnerHand);
-            setConversation(prevConversation => [...prevConversation, `Player ${winner} wins ${currentPots['totalPot']} with a ${winnerHand} hand!`]);
-            // I want to 1. reset player turns to -1 (to not immediately start initiate)?, 2. give the winner his pot, 3. reset current pot, 4. reset current bet to big blind, 5. reset commit by round and other commits, 6. reset folds, 7. allow initiate to start again?
-            // To stop the game
-            // Paying winner the won pot
-            if (Number(winner) === 1) {
-                currentPots['total'] += currentPots['totalPot'];
-                console.log(currentPots['totalPot'])
-            } else {
-                // if ai gives us player answer
-                console.log(winner, Number(winner), opponents[Number(winner)], currentPots['totalPot']);
-                if (winner.length > 1) {
-                    opponents[Number(winner.split(' ')[1])]['total'] += currentPots['totalPot'];
-                    console.log('not good');
-                } else {
-                    opponents[Number(winner)]['total'] += currentPots['totalPot'];
-                }
-            }
-        } else {
-            console.log('tie', tie);
+
+        // If its Tieable
+        if (tie.length > 1 && !winnerHand.includes('Royal Flush') && !winnerHand.includes('Flush') && !winnerHand.includes('Straight')) {
+            setConversation(prevConversation => [...prevConversation, `Players ${tie} have the best hand this round with a ${winnerHand}, please let us calculate if one of the hands beats the other in a tiebreaker!`]);
+            // then we send to API tiebreaker
+            const response = await instance.post('http://127.0.0.1:8000/tiebreaker/', {
+                cards: cards,
+                hand: winnerHand,
+                ties: tie
+            });
+            
+            tie = response.data['winner'];
+            winner = tie[0];
+        }
+
+        if (tie.length > 1) {
             let equalEarnings = currentPots['totalPot'] / tie.length;
             equalEarnings = Math.round(equalEarnings * 10) / 10;
-            setConversation(prevConversation => [...prevConversation, `Players ${String(tie)} tied with a hand of ${winnerHand}, its a split pot of ${equalEarnings} each!`]);
+            setConversation(prevConversation => [...prevConversation, `Players ${String(tie)} tied with a hand of ${winnerHand}, each player wins ${equalEarnings} chips!`]);
             for (let i = 0; i < tie.length; i++) {
                 if (tie[i] === '1') {
                     currentPots['total'] += equalEarnings;
@@ -270,9 +298,55 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                     opponents[Number(tie[i])]['total'] += equalEarnings;
                 }
             }
+        } else {
+
+            // I want to 1. reset player turns to -1 (to not immediately start initiate)?, 2. give the winner his pot, 3. reset current pot, 4. reset current bet to big blind, 5. reset commit by round and other commits, 6. reset folds, 7. allow initiate to start again?
+            // To stop the game
+            // Paying winner the won pot
+
+            if (Number(winner) === 1) {
+                // Side Pot Win
+                let maximumCommit = 0;
+                for (const key in activePlayers) {
+                    if (activePlayers[Number(key)] === 1) {
+                        Math.max(maximumCommit, currentPots['committed'])
+                    } else {
+                        Math.max(maximumCommit, opponents[activePlayers[Number(key)]]['commit'])
+                    }
+                }
+                if (currentPots['committed'] < maximumCommit) {
+                    let winnings = allInWin(activePlayers, 1, currentPots['committed']);
+                    currentPots['total'] += winnings;
+                    setConversation(prevConversation => [...prevConversation, `Player 1 wins, since Player's bet size is only ${currentPots['committed']},  Player 1 will win ${winnings} chips with a ${winnerHand} hand!`]);
+                } else {
+                    currentPots['total'] += currentPots['totalPot'];
+                    setConversation(prevConversation => [...prevConversation, `Player ${winner} wins ${currentPots['totalPot']} chips with a ${winnerHand} hand!`]);
+                }
+                
+            } else {
+                let maximumCommit = 0;
+                for (const key of activePlayers) {
+                    if (key === 1) {
+                        Math.max(maximumCommit, currentPots['committed'])
+                    } else {
+                        Math.max(maximumCommit, opponents[key]['commit'])
+                    }
+                }
+                if (opponents[Number(winner)]['commit'] < maximumCommit) {
+                    let winnings = allInWin(activePlayers, Number(winner), opponents[Number(winner)]['commit']);
+                    opponents[Number(winner)]['total'] += winnings;
+                    setConversation(prevConversation => [...prevConversation, `Player ${winner} wins, since Player's bet size is only ${opponents[Number(winner)]['commit']},  Player will win ${winnings} chips with a ${winnerHand} hand!`]);
+
+                } else {
+                    opponents[Number(winner)]['total'] += currentPots['totalPot'];
+                    setConversation(prevConversation => [...prevConversation, `Player ${winner} wins ${currentPots['totalPot']} chips with a ${winnerHand} hand!`]);
+                }
+            }
+            
         }
         setCommitByRound([]);
         // const winner = response.data['winner'];
+        console.log('What was used to determine winner:', maximum, winner,tie,winnerHand,currentPots, opponents );
         
     }
 
@@ -281,6 +355,11 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
         // things to reset: cards, folds, player display (total current pot, current bet, committed), opponent committed
         // turn == 0, button = button + 1, big small blinds, turnword == pre-flop, commitbyround
         setConversation(prevConversation => [...prevConversation, 'New Game Starting!']);
+        if (currentPots['total'] <= 0) {
+            setConversation(prevConversation => [...prevConversation, `YOU HAVE LOST! YOU WILL BUY BACK IN`]);
+            currentPots['total'] = 200
+        }
+        setShow(false);
         setFolds([]);
         if (settings[4] == total_players) {
             settings[4] = 1
@@ -289,26 +368,32 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
             settings[4] += 1
             button += 1
         }
+        setAllIns(Array.from({length: total_players}, (_, i) => i + 1));
         blindPositions = blinds(button, total_players);
         currentPots['committed'] = 0;
         currentPots['current_bet'] = big_bet;
         currentPots['totalPot'] = 0;
         for (const key in opponents) {
             opponents[key]['commit'] = 0;
+            if (opponents[key]['total'] === 0) {
+                opponents[key]['total'] = buy_in;
+                setConversation(prevConversation => [...prevConversation, `Player ${key} has bought back in!`]);
+            }
         }
+
         SmallBlindStart();
         if (blindPositions.bigBlind === total_players) {
             setPlayerTurn(1);
         } else {
             setPlayerTurn(blindPositions.bigBlind + 1);
         }
-        
-        setTurn(0)
+        setTurn(0);
+        setTurnWord('Pre-Flop');
+        console.log('New game has started, the things taht should be changed are', button,currentPots,opponents,blindPositions);
 
     }
 
     const SmallBlindStart = () => {
-        console.log('small blind start');
         if (blindPositions.smallBlind !== 1) {
             opponents[blindPositions.smallBlind].total -= big_bet / 2;
             opponents[blindPositions.smallBlind].commit = big_bet / 2; 
@@ -330,10 +415,11 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
         }
         currentPots.totalPot += big_bet * 1.5;
         initiate();
-        console.log('small blind start', commitByRound);
+        console.log('were setting up the blinds and pots and stuff for the this game', opponents, commitByRound, currentPots);
     };
 
     const suggestMove = async () => {
+        setConversation(prevConversation => [...prevConversation, 'Suggestion: Please wait one suggestion, a suggestion is being generated!']);
         let conversationContext: string[] = []
         for (let i = conversation.length - 1; i > 0; i--) {
             if (conversation[i].includes('New Game Starting!')) {
@@ -346,19 +432,24 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
         if (commitByRound[playerTurn]) {
             committedRound = commitByRound[playerTurn];
         }
+        let slicing = turn;
+        if (slicing === 0) {
+            slicing = -2;
+        }
         const response = await instance.post('http://127.0.0.1:8000/ai_suggest/', {
             turn: turnWord,
             current_bet: currentPots['current_bet'],
             budget: currentPots['total'],
-            cards: cards,
+            hand: cards['1'],
+            community: cards['playing'].slice(0, slicing + 2),
             committedRound: currentPots['committed'],
             committedTurn: committedRound,
             conversationContext: conversationContext,
             players: total_players,
+            best: determineBestHand(turn, 1, cards)[0]
         }); 
-        console.log('suggestion', response);
-        setConversation(prevConversation => [...prevConversation, response.data['suggest']]);
-        }
+        setConversation(prevConversation => [...prevConversation, 'Suggestion: ' + response.data['suggest']]);
+    }
 
         const playerDialog = () => {
             // Dialog for player's turn!
@@ -375,20 +466,78 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
             }
         }
 
+        const roundFeedback = async () => {
+            let roundContext: string[] = []
+            for (let i = conversation.length - 1; i > 0; i--) {
+                if (conversation[i].includes('New Game Starting!')) {
+                    break;
+                } else if (conversation[i].includes('Player') || conversation[i].includes('Betting has' || conversation[i].includes('Round Conclusion'))) {
+                    roundContext.unshift(conversation[i]);
+                }
+            }
+            const response = await instance.post('http://127.0.0.1:8000/ai_feedback/', {
+                cards: cards,
+                history: roundContext
+            });
+            setConversation(prevConversation => [...prevConversation, `Round Feedback: ${response.data['feedback']}`]);
+        }
+
+        const allInWin = (activePlayers: number[], winner: number, winningPotSize: number) => {
+            let leftoverPlayers: CardProps['commitTracker'] = {};
+            let winnings = 0;
+            for (const num in activePlayers) {
+                if (Number(num) !== winner) {
+                    let committment = currentPots['committed'];
+                    if (Number(num) !== 1) {
+                        committment = opponents[Number(num)]['commit'];
+                    }
+                    if (committment > winningPotSize) {
+                        winnings += winningPotSize;
+                        leftoverPlayers[Number(num)] = committment - winningPotSize;
+                    } else {
+                        winnings += committment;
+                    }
+                }
+            };
+            for (const key in Object.keys(leftoverPlayers)) {
+                if (key === '1') {
+                    currentPots['total'] += leftoverPlayers[key];
+                } else {
+                    opponents[key]['total'] += leftoverPlayers[key];
+                }
+                
+            }
+            return winnings;
+        }
+
     useEffect(() => {
-        if (playerTurn > 0 && !broke.includes(playerTurn)) {
+        // Playing Game
+        if (playerTurn > 0) {
+            // Detect if game is over because of folders or people who are all in
             // End of round detect if current bet is 0
             if (commitByRound.hasOwnProperty(playerTurn) && currentPots['current_bet'] === commitByRound[playerTurn]) {
-                // Game end detection
-                console.log('hitting no bet round end');
-                console.log('turn', turn);
-                if (turn + 1 > 3) {
+                if (turn === 0 && playerTurn === blindPositions.bigBlind && currentPots['current_bet'] == big_bet) {
+                    console.log('Everyone has matched bet but its big blinds turn but on pre-flop therefore ai function or user turn will start, PlayerTurn: ', playerTurn);
+                    // This is to prompt a move for last bet of pre-flop, special case
+                    if (playerTurn === 1) {
+                        setTimeout(playerDialog, 500);
+                    } else {
+                        setTimeout(AIMove, 1000);
+                    }
+                    
+                }
+                // All In Scenario 1
+                else if (allIns.length < 2) {
                     GameWinner(0);
+                }
+                // Game end detection
+                else if (turn + 1 > 3) {
+                    GameWinner(0);
+                    console.log('The turn is now past 3, indicating a natural game end', turn);
                 } else {
                     setTurn(turn + 1);
                     setPlayerTurn(blindPositions.smallBlind);
                     setCommitByRound([]);
-                    setRoundEnd(roundEnd + 1);
                     currentPots['current_bet'] = 0
                     TurnChange();
                     let changeTurn = 'Flop';
@@ -398,22 +547,22 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                         changeTurn = 'River'
                     }
                     setConversation(prevConversation => [...prevConversation, `Betting has finished! Now onto the ${changeTurn}`]);
+                    setRoundEnd(roundEnd + 1);
+                    console.log(`It has been determined that the round is over, its player turn ${playerTurn}, turn add 1, playerturn now to small blind: ${blindPositions.smallBlind}`);
                 }
+            } else if (!allIns.includes(playerTurn)) {
+                console.log('This person has either folded or has already gone all in!');
+                PlayerChange();
             }
             // Prompt AI to play turn if its not the user's turn and if round isn't ending
             else if (playerTurn > 1) {
+                console.log('Player turn is not 1, therefore ai function will start, PlayerTurn: ', playerTurn);
                 setTimeout(AIMove, 1000);
-            } else {
+            } else if (playerTurn === 1) {
                 setTimeout(playerDialog, 1000);
-                console.log('success');
             }
         }
-
-        
-
-        if (playerTurn === 1 && folds.includes(1) || broke.includes(playerTurn)) {
-            PlayerChange();
-        }
+    
 
         // Initialization of opponent pots, cards, etc.
         if (playerTurn === 0) {
@@ -427,29 +576,35 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
             // Setting up small and big blinds commit and pot adjustments
             SmallBlindStart();
         }
-
-        
-        
     }, [playerTurn, roundEnd]);
-
     if (cards[1].length === 0) {
-            console.log('condition met');
             return <div>Loading...</div>;
         }
 
     return (
         <div className='vertical-flex'>
-            <Typography m={2}>{turnWord}</Typography>
+            {/* <Box sx={{width: '40%', marginLeft: 'auto', marginRight: 'auto'}}>
+                {playerTurn === 0 && <Button onClick={() => {setPlayerTurn(settings[4] + 3 % total_players)
+                                                             setConversation(prevConversation => [...prevConversation, 'New Game Starting!'])
+                                                             console.log(cards);
+                                                             console.log('Starting Game Press, Setting Player Turn to:', settings[4] + 3 % total_players)}} variant='contained' sx={{backgroundColor: '#BEBEBE'}}>Start Game</Button>}
+                {playerTurn === -1 && <Button variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={NextRound}>Start Next Game</Button>}
+                <Button variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={() => console.log(allIns)}>checker</Button>
+            </Box> */}
+            
+            <Typography m={2} sx={{color: 'white'}}>{turnWord}</Typography>
             <CardDisplay turn={turn} cardsData={cards}/>
-            <Box sx={{backgroundColor: '#FBFBFB', width: '70%', height: '30rem', marginLeft: 'auto', marginRight: 'auto', borderRadius: 3}}>
-                <GameDisplay settings={settings} pots={currentPots} opponents = {opponents} whos_turn={playerTurn} folds={folds} userMove = {handleUserMove} commitByRound={commitByRound[1]}/>
+            <Box sx={{backgroundColor: '#8B8B8B', width: '70%', height: '33rem', marginLeft: 'auto', marginRight: 'auto', borderRadius: 3}}>
+                <GameDisplay settings={settings} pots={currentPots} opponents = {opponents} whos_turn={playerTurn} folds={folds} userMove = {handleUserMove} show={show} commitByRound={commitByRound} startButton={startGame} nextRound={NextRound}/>
                 <DialogBox conversation={conversation}/>
-                <Button onClick={suggestMove}>Give me a Suggestion!</Button>
+                
+                <Button disabled={playerTurn !== 1} variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={suggestMove}>Give me a Suggestion!</Button>
+                <Button disabled={playerTurn !== -1} variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={roundFeedback}>Feedback for Round</Button>
+                
             </Box>
-            {playerTurn === 0 && <Button onClick={() => {setPlayerTurn(settings[4] + 3 % total_players)
-                                                         setConversation(prevConversation => [...prevConversation, 'New Game Starting!'])}}>Start Game</Button>}
-            {<Button disabled={playerTurn !== -1} onClick={NextRound}>Next Game</Button>}
-            <Button onClick={() => console.log(playerTurn)}>checker</Button>
+            
+            
+            
         </div>
     );
 }

@@ -15,11 +15,9 @@ import axios from 'axios';
 interface StartComponentProps {
   setInitial: Dispatch<SetStateAction<boolean>>;
   setSettings: Dispatch<SetStateAction<number[]>>;
-  setSessionId: Dispatch<SetStateAction<string>>;
 }
 
-const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings, setSessionId }) => {
-    const instance = axios.create();  
+const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings }) => {
     const [difficulty, setDifficulty] = useState(2);
     const [players, setPlayers] = useState(3);
     const [buyIn, setBuyIn] = useState(200);
@@ -51,7 +49,7 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
                         <Box mt={2} mb={4}>
                             <Typography>Number of Bots</Typography>
                             <Box sx={{width: "44%", margin: 'auto'}}>
-                                <IncrementNumber aria-label="Number of Bots" defaultValue={3} max={6} min={2} onChange={(event,value) => setPlayers(value ?? 3)}/>
+                                <IncrementNumber aria-label="Number of Bots" defaultValue={3} max={4} min={2} onChange={(event,value) => setPlayers(value ?? 3)}/>
                             </Box>
                         </Box>
                         <Box mb={4}>
@@ -68,7 +66,7 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
                         </Box>
                         
                         <Box mb={2}sx={{width: '44%', marginLeft: 'auto',marginRight: 'auto'}}>
-                            <Typography>Difficulty</Typography>
+                            <Typography>Bot Difficulty</Typography>
                             <FormControl fullWidth sx={{backgroundColor: 'white'}}>
                                 <InputLabel id="demo-simple-select-label"></InputLabel>
                                 <Select
@@ -78,9 +76,9 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
                                 value={difficulty}
                                 onChange={handleDifficulty}
                                 >
-                                <MenuItem value={1}>Easy</MenuItem>
+                                <MenuItem value={1}>Beginner</MenuItem>
                                 <MenuItem value={2}>Medium</MenuItem>
-                                <MenuItem value={3}>Hard</MenuItem>
+                                <MenuItem value={3}>Professional</MenuItem>
                                 </Select>
                             </FormControl>
                         </Box>

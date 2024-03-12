@@ -1,5 +1,4 @@
-import * as React from 'react';
-import {Button, Typography, Box, InputLabel, MenuItem, FormControl, Select} from '@mui/material';
+import {Typography, Box} from '@mui/material';
 import Club from '../icons/Club.png';
 import Diamond from '../icons/Diamond.png'
 import Spade from '../icons/Spade.png'

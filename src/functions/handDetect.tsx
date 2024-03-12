@@ -15,6 +15,7 @@ const determineBestHand = (turn: number, player: number, cardsData: {
         14: 'A',
     };
 
+
     const convert = (cardValue: number) => {
         if (cardValue > 10) {
             return convertMap[cardValue];
@@ -26,10 +27,14 @@ const determineBestHand = (turn: number, player: number, cardsData: {
         let consecutive = 1
         let maximum = 0
         let lastValue = 0
-        const numbers = deck.map(card => {
+        const numbers: (number | string)[] = deck.map(card => {
             return card[0];
         })
-        numbers.sort().forEach(card => {
+        const sortedNumbers = numbers.sort(function(a: number | string, b: number | string) {
+            return Number(a) - Number(b);
+        });
+        lastValue = Number(sortedNumbers[0]);
+        sortedNumbers.forEach(card => {
             if (card == lastValue + 1) {
                 consecutive += 1
                 if (consecutive > 4) {
@@ -54,7 +59,7 @@ const determineBestHand = (turn: number, player: number, cardsData: {
     let allCards: [string | number, string][] = [];
     if (turn >= 1) allCards.push(...cardsData['playing'].slice(0, 3));
     if (turn >= 2) allCards.push(cardsData['playing'][3]);
-    if (turn === 3) allCards.push(cardsData['playing'][4]);
+    if (turn >= 3) allCards.push(cardsData['playing'][4]);
     allCards.push(...cardsData[player]);
     
     allCards = allCards.map(card => {
@@ -64,7 +69,6 @@ const determineBestHand = (turn: number, player: number, cardsData: {
         } else {
             return [card[0], card[1]];
         }
-        
     });
     const valueMap: { [key: number]: number } = {};
     allCards.map(card => {
@@ -146,7 +150,6 @@ const determineBestHand = (turn: number, player: number, cardsData: {
     }
 
     const straightChecker = straight(allCards);
-
     // STRAIGHT CHECK
     if (straightChecker > 0) {
         return [`${convert(straightChecker)} High Straight`, straightChecker + 52];

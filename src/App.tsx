@@ -8,7 +8,7 @@ import Game from './components/Game';
 
 
 function App() {
-  document.body.style.backgroundColor = "#d9d9e3cc"
+  document.body.style.backgroundColor = "#3F3F3F"
 
   const [initial, setInitial] = useState(true);
   const [settings, setSettings] = useState<number[]>([]);
@@ -19,16 +19,16 @@ function App() {
     <div style={{fontFamily:'sans-serif'}}>
 
       <div className='vertical-flex' style={{textAlign:'center'}}>
-        <div style={{marginTop:10}}>
+        <div style={{marginTop:8}}>
           <img src={cards}/>
         </div>
-        <div style={{marginBottom: 40}}>
-          <p style={{margin:0, color: 'gray'}}>POKERBOT</p>
+        <div>
+          <p style={{margin:0, color: 'white'}}>POKERBOT</p>
         </div>
         {/* #0066cc */}
         {initial ? (
           <div style={{ height: '100vh' }}>
-            <StartComponent setInitial={setInitial} setSettings={setSettings} setSessionId={setSessionId} />
+            <StartComponent setInitial={setInitial} setSettings={setSettings}/>
           </div>
         ) : (
           <div>
