@@ -76,7 +76,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                 }
                 // control what cards you send to AI because it somehow sees the cards anyways?
 
-                const response = await instance.post('http://127.0.0.1:8000/ai_move/', {
+                const response = await instance.post('https://pokerbotbackend.applikuapp.com/ai_move/', {
                     player: playerTurn,
                     turn: turn,
                     current_bet: currentPots['current_bet'],
@@ -277,7 +277,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
         if (tie.length > 1 && !winnerHand.includes('Royal Flush') && !winnerHand.includes('Flush') && !winnerHand.includes('Straight')) {
             setConversation(prevConversation => [...prevConversation, `Players ${tie} have the best hand this round with a ${winnerHand}, please let us calculate if one of the hands beats the other in a tiebreaker!`]);
             // then we send to API tiebreaker
-            const response = await instance.post('http://127.0.0.1:8000/tiebreaker/', {
+            const response = await instance.post('https://pokerbotbackend.applikuapp.com/tiebreaker/', {
                 cards: cards,
                 hand: winnerHand,
                 ties: tie
@@ -436,7 +436,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
         if (slicing === 0) {
             slicing = -2;
         }
-        const response = await instance.post('http://127.0.0.1:8000/ai_suggest/', {
+        const response = await instance.post('https://pokerbotbackend.applikuapp.com/ai_suggest/', {
             turn: turnWord,
             current_bet: currentPots['current_bet'],
             budget: currentPots['total'],
@@ -475,7 +475,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                     roundContext.unshift(conversation[i]);
                 }
             }
-            const response = await instance.post('http://127.0.0.1:8000/ai_feedback/', {
+            const response = await instance.post('https://pokerbotbackend.applikuapp.com/ai_feedback/', {
                 cards: cards,
                 history: roundContext
             });
