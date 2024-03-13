@@ -154,7 +154,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
     }
 
     const initiate = async () => {
-        instance.get(`https://collapbackend.applikuapp.com/initiate/?players=${encodeURIComponent(total_players)}`)
+        instance.get(`https://pokerbotbackend.applikuapp.com/initiate/?players=${encodeURIComponent(total_players)}`)
         .then(response => {
             setCards(response.data);
             Object.entries(response.data).forEach(([key, value]) => {
