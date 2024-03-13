@@ -8,10 +8,11 @@ I chose to develop this project with the goal of deepning my understanding of we
 I was driven to develope a single-page application in order to focus directly on functionality and usability for the user. I've also decided to minimize the use of API calls and abstaining from using a database. This approach not only refined my TypeScript proficiency but also improve my problem-solving and debugging skills in ReactJS. By centralizing the application's logic in the frontend, I aim to craft a simple yet effective learning tool for people to enhance their poker strategy through experience.
 
 ## Hosted Project
-### Frontend (Netlify)
-* https://main--pokerbot.netlify.app/
-### Backend Documentation
-* [https://main--pokerbot.netlify.app/](https://github.com/shinste/poker_bot_backend)
+* [PokerBot](https://main--pokerbot.netlify.app/)
+  - Hosted Through Netlify
+### 
+* [Backend Documentation](https://github.com/shinste/poker_bot_backend)
+  - Hosted Through AWS
 
 ## Scope
 Poker Bot allows you to play unlimited games of poker with computer AI opponents. It provides adjustable settings for different levels of play and specific betting amounts. Instead of dollars, the currency used to gamble in this program are simply "Chips". Before you play, you will first be prompted to adjust the number of opponents to play, buy in ammount, big bet amount, and difficulty.
