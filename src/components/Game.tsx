@@ -85,7 +85,7 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                     committed: opponents[playerTurn]['commit'],
                     commitRound: committedRound,
                     difficulty: settings[3],
-                    best: determineBestHand(turn, playerTurn, cards)
+                    best: determineBestHand(turn, playerTurn, cards)[0]
                 });
                 if (!commitByRound.hasOwnProperty(playerTurn)) {
                     commitByRound[playerTurn] = 0
@@ -592,10 +592,9 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
                 <Button variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={() => console.log(allIns)}>checker</Button>
             </Box> */}
             
-            <Typography m={2} sx={{color: 'white'}}>{turnWord}</Typography>
-            <CardDisplay turn={turn} cardsData={cards}/>
-            <Box sx={{backgroundColor: '#8B8B8B', width: '70%', height: '33rem', marginLeft: 'auto', marginRight: 'auto', borderRadius: 3}}>
-                <GameDisplay settings={settings} pots={currentPots} opponents = {opponents} whos_turn={playerTurn} folds={folds} userMove = {handleUserMove} show={show} commitByRound={commitByRound} startButton={startGame} nextRound={NextRound}/>
+            <CardDisplay turn={turn} cardsData={cards} turnWord={turnWord} commitByRound={commitByRound} players={total_players} folds={folds} pots={currentPots} playerTurn={playerTurn}/>
+            <Box sx={{backgroundColor: '#8B8B8B', width: '70%', height: '30rem', marginLeft: 'auto', marginRight: 'auto', borderRadius: 3}}>
+                <GameDisplay settings={settings} pots={currentPots} opponents = {opponents} whos_turn={playerTurn} folds={folds} userMove = {handleUserMove} show={show} commitByRound={commitByRound} startButton={startGame} nextRound={NextRound} cards={cards} turn={turn}/>
                 <DialogBox conversation={conversation}/>
                 
                 <Button disabled={playerTurn !== 1} variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={suggestMove}>Give me a Suggestion!</Button>

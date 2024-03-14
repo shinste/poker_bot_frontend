@@ -26,7 +26,10 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
 
     const handleDifficulty = (event: any) => {
         setDifficulty(event.target.value);
-      };
+    };
+      const handlePlayers = (event: any) => {
+        setPlayers(event.target.value);
+    };
 
     const handleButtonClick = async () => {
         setSettings([players + 1, buyIn, bigBlind, difficulty, 1]);
@@ -47,12 +50,6 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
                 <Box sx={{border: '2px solid #A8A8A8', margin: 'auto', width: '30%', height: '30rem', backgroundColor: "#BEBEBE", borderRadius: 8}}>
                     <Box className='vertical-flex' style={{height: '100%'}}>
                         <Box mt={2} mb={4}>
-                            <Typography>Number of Bots</Typography>
-                            <Box sx={{width: "44%", margin: 'auto'}}>
-                                <IncrementNumber aria-label="Number of Bots" defaultValue={3} max={4} min={2} onChange={(event,value) => setPlayers(value ?? 3)}/>
-                            </Box>
-                        </Box>
-                        <Box mb={4}>
                             <Typography>Buy-In</Typography>
                             <Box sx={{width: "44%", margin: 'auto'}}>
                                 <IncrementNumber aria-label="Buy-In" defaultValue={200} min={10} onChange={(event,value) => setBuyIn(value ?? 200)}/>
@@ -61,16 +58,35 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
                         <Box mb={4}>
                             <Typography>Big Blind</Typography>
                             <Box sx={{width: "44%", margin: 'auto', textAlign: 'center'}}>
-                                <IncrementNumber aria-label="BigBlind" defaultValue={5} min={0} onChange={(event,value) => setBigBlind(value ?? 5)}/>
+                                <IncrementNumber aria-label="BigBlind" defaultValue={2} min={0} onChange={(event,value) => setBigBlind(value ?? 5)}/>
                             </Box>
                         </Box>
-                        
+                        <Box mb={4} sx={{width: '44%', marginLeft: 'auto',marginRight: 'auto'}}>
+                            <Typography>Number of Bots</Typography>
+                            {/* <Box sx={{width: "44%", margin: 'auto'}}>
+                                <IncrementNumber aria-label="Number of Bots" defaultValue={3} max={4} min={2} onChange={(event,value) => setPlayers(value ?? 3)}/>
+                            </Box> */}
+                            <FormControl fullWidth sx={{backgroundColor: 'white'}}>
+                                <InputLabel id="demo-simple-select-label"></InputLabel>
+                                <Select
+                                sx={{backgroundColor: 'white',"& .MuiSelect-select": {paddingLeft: '30px'}}}
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={players}
+                                onChange={handlePlayers}
+                                >
+                                <MenuItem value={2}>2</MenuItem>
+                                <MenuItem value={3}>3</MenuItem>
+                                <MenuItem value={4}>4</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
                         <Box mb={2}sx={{width: '44%', marginLeft: 'auto',marginRight: 'auto'}}>
                             <Typography>Bot Difficulty</Typography>
                             <FormControl fullWidth sx={{backgroundColor: 'white'}}>
                                 <InputLabel id="demo-simple-select-label"></InputLabel>
                                 <Select
-                                sx={{backgroundColor: 'white'}}
+                                sx={{backgroundColor: 'white', "& .MuiSelect-select": {paddingLeft: '30px'}}}
                                 labelId="demo-simple-select-label"
                                 id="demo-simple-select"
                                 value={difficulty}
