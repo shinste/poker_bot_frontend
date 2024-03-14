@@ -69,7 +69,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ settings, pots, opponents, wh
     }, [whos_turn, cards, turn]);
 
     return (
-        <Box mb={-2}sx={{display:'flex', width: '100%', height: '50%', marginTop:1, justifyContent: 'space-between'}}>
+        <Box mb={-2}sx={{display:'flex', width: '100%', height: '50%', marginTop:0, justifyContent: 'space-between'}}>
             {/* <Box sx={{display: 'flex', flexDirection: 'column', marginLeft: 'auto', marginRight: 'auto', alignSelf:'start'}}> */}
                 {/* <Typography>
                     Total Players: {settings[0]}
@@ -151,10 +151,9 @@ const GameDisplay: React.FC<GameDisplayProps> = ({ settings, pots, opponents, wh
                     <Card value={cards[1][0][0]} suit={cards[1][0][1]} status={true}/>
                     <Card value={cards[1][1][0]} suit={cards[1][1][1]} status={true}/>
                 </Box>
-                <Typography sx={{color: 'white', marginLeft: 'auto', marginRight: 'auto'}}my={2}>{bestHand}</Typography>
+                <Typography sx={{color: 'white', marginLeft: 'auto', marginRight: 'auto'}}my={1}>{bestHand}</Typography>
                 <Typography>Your Total Chips: {Math.round(pots['total'] * 10) / 10}</Typography>
                 <Typography>Current Bet: {pots['current_bet']} chips</Typography>
-                
             </Box>
                 
                 {/* <Box sx={{display: 'flex', flexDirection:'column', marginLeft: 'auto', marginRight: 'auto'}}>

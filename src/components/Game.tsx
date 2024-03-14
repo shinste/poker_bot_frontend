@@ -593,17 +593,12 @@ const Game: React.FC<GameProps> = ({ settings}: GameProps) => {
             </Box> */}
             
             <CardDisplay turn={turn} cardsData={cards} turnWord={turnWord} commitByRound={commitByRound} players={total_players} folds={folds} pots={currentPots} playerTurn={playerTurn}/>
-            <Box sx={{backgroundColor: '#8B8B8B', width: '70%', height: '30rem', marginLeft: 'auto', marginRight: 'auto', borderRadius: 3}}>
+            <Box sx={{backgroundColor: '#8B8B8B', width: '70%', height: '27rem', marginLeft: 'auto', marginRight: 'auto', borderRadius: 3}}>
                 <GameDisplay settings={settings} pots={currentPots} opponents = {opponents} whos_turn={playerTurn} folds={folds} userMove = {handleUserMove} show={show} commitByRound={commitByRound} startButton={startGame} nextRound={NextRound} cards={cards} turn={turn}/>
                 <DialogBox conversation={conversation}/>
-                
                 <Button disabled={playerTurn !== 1} variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={suggestMove}>Give me a Suggestion!</Button>
                 <Button disabled={playerTurn !== -1} variant='contained' sx={{backgroundColor: '#BEBEBE'}} onClick={roundFeedback}>Feedback for Round</Button>
-                
             </Box>
-            
-            
-            
         </div>
     );
 }
