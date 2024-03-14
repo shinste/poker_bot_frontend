@@ -11,9 +11,6 @@ const DialogBox: React.FC<Props> = ({ conversation }) => {
     const scrollableRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         // Scroll to the bottom when conversation updates
-        // if (scrollableRef.current) {
-        //     scrollableRef.current.scrollTop = scrollableRef.current.scrollHeight;
-        // }
         if (scrollableRef.current) {
             scrollableRef.current.scrollIntoView()
         }

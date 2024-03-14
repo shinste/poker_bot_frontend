@@ -1,16 +1,6 @@
-import NumbInput from './NumbInput';
 import {Button, Typography, Box, InputLabel, MenuItem, FormControl, Select} from '@mui/material';
-import React, { useState, SetStateAction, Dispatch, useContext} from 'react';
+import React, { useState, SetStateAction, Dispatch} from 'react';
 import IncrementNumber from './IncrementNumber';
-import axios from 'axios';
-
-
-// import * as React from 'react';
-// import Box from '@mui/material/Box';
-// import InputLabel from '@mui/material/InputLabel';
-// import MenuItem from '@mui/material/MenuItem';
-// import FormControl from '@mui/material/FormControl';
-// import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 interface StartComponentProps {
   setInitial: Dispatch<SetStateAction<boolean>>;
@@ -63,9 +53,6 @@ const StartComponent: React.FC<StartComponentProps> = ({ setInitial, setSettings
                         </Box>
                         <Box mb={4} sx={{width: '44%', marginLeft: 'auto',marginRight: 'auto'}}>
                             <Typography>Number of Bots</Typography>
-                            {/* <Box sx={{width: "44%", margin: 'auto'}}>
-                                <IncrementNumber aria-label="Number of Bots" defaultValue={3} max={4} min={2} onChange={(event,value) => setPlayers(value ?? 3)}/>
-                            </Box> */}
                             <FormControl fullWidth sx={{backgroundColor: 'white'}}>
                                 <InputLabel id="demo-simple-select-label"></InputLabel>
                                 <Select

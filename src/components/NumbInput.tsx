@@ -1,5 +1,4 @@
-import { Box, Text, NumberInput, NumberInputField, InputLeftElement, Icon, InputGroup } from '@chakra-ui/react'
-import { Typography } from '@mui/material';
+import { Box, NumberInput, NumberInputField} from '@chakra-ui/react'
 
 interface StartComponentProps {
     defaultNumber: number;
