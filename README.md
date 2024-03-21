@@ -8,6 +8,9 @@ I chose to develop this project with the goal of deepning my understanding of we
 I was driven to develope a single-page application in order to focus directly on functionality and usability for the user. I've also decided to minimize the use of API calls and abstaining from using a database. This approach not only refined my TypeScript proficiency but also improve my problem-solving and debugging skills in ReactJS. By centralizing the application's logic in the frontend, I aim to craft a simple yet effective learning tool for people to enhance their poker strategy through experience.
 
 ## Hosted Project
+#### Note:
+For cost purposes, the EC2 instance that hosts this app will be scheduled to run between 9AM - 5PM (Pacific), Mon - Fri.
+
 * [PokerBot](https://main--pokerbot.netlify.app/)
   - Hosted Through Netlify
 ### 
